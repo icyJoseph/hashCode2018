@@ -1,6 +1,6 @@
 import math
 
-filename = "e_high_bonus.in"
+filename = "d_metropolis.in"
 score = 0
 
 
@@ -45,12 +45,27 @@ def choose_destinations(destinations, limit, overload, bonus):
             finishable_destinations = [destination for destination in doable_destinations if finishable_destination(
                 destination, start, step)]
             if(len(finishable_destinations) > 0):
-                earliest = earliest_destination(
+
+                closest = closest_destination(
                     finishable_destinations, start)
-                if step + distance(start, earliest['start_point']) < earliest['start_time']:
+                if step + distance(start, closest['start_point']) < closest['start_time']:
                     print("STARTS on time")
                     on_time += 1
                     points += bonus
+                if step + distance(start, closest['start_point']) < closest['start_time']:
+                    step = closest['distance'] + closest['start_time']
+                if step + distance(start, closest['start_point']) >= closest['start_time']:
+                    step += distance(
+                        start, closest['start_point']) + closest['distance']
+                if step > limit:
+                    break
+                start = closest["end_point"]
+                close += 1
+                rides.append(closest)
+            else:
+                earliest = earliest_destination(
+                    doable_destinations, start)
+
                 if step + distance(start, earliest['start_point']) < earliest['start_time']:
                     step = earliest['distance'] + earliest['start_time']
                 if step + distance(start, earliest['start_point']) >= earliest['start_time']:
@@ -65,19 +80,6 @@ def choose_destinations(destinations, limit, overload, bonus):
 
                 rides.append(earliest)
                 destinations.remove(earliest)
-            else:
-                closest = closest_destination(
-                    doable_destinations, start)
-                if step + distance(start, closest['start_point']) < closest['start_time']:
-                    step = closest['distance'] + closest['start_time']
-                if step + distance(start, closest['start_point']) >= closest['start_time']:
-                    step += distance(
-                        start, closest['start_point']) + closest['distance']
-                if step > limit:
-                    break
-                start = closest["end_point"]
-                close += 1
-                rides.append(closest)
             #         destinations.remove(closest)
             # else:
             #     reasonable_destination = earliest_destination(
