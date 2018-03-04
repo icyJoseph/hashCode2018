@@ -1,6 +1,6 @@
 import math
 
-filename = "d_metropolis.in"
+filename = "b_should_be_easy.in"
 score = 0
 
 
@@ -38,86 +38,48 @@ def choose_destinations(destinations, limit, overload, bonus):
         doable_destinations = [destination for destination in destinations if doable_destination(
             destination, start, step, limit)]
         if(len(doable_destinations) > 0):
-            # startable_destinations = [
-            #     destination for destination in destinations if startable_destination(destination, start, step)]
-            # print(startable_destinations)
-            # if(len(startable_destinations) > 0):
-            finishable_destinations = [destination for destination in doable_destinations if finishable_destination(
-                destination, start, step)]
-            if(len(finishable_destinations) > 0):
-
-                closest = closest_destination(
-                    finishable_destinations, start)
-                if step + distance(start, closest['start_point']) < closest['start_time']:
-                    print("STARTS on time")
-                    on_time += 1
-                    points += bonus
-                if step + distance(start, closest['start_point']) < closest['start_time']:
-                    step = closest['distance'] + closest['start_time']
-                if step + distance(start, closest['start_point']) >= closest['start_time']:
-                    step += distance(
-                        start, closest['start_point']) + closest['distance']
-                if step > limit:
-                    break
-                start = closest["end_point"]
-                close += 1
-                rides.append(closest)
-            else:
-                earliest = earliest_destination(
-                    doable_destinations, start)
-
-                if step + distance(start, earliest['start_point']) < earliest['start_time']:
-                    step = earliest['distance'] + earliest['start_time']
-                if step + distance(start, earliest['start_point']) >= earliest['start_time']:
-                    step += distance(
-                        start, earliest['start_point']) + earliest['distance']
-                if step > limit:
-                    break
-                start = earliest["end_point"]
-                finishable += 1
-                # the ones we can finish on time add points
-                points += earliest['distance']
-
-                rides.append(earliest)
-                destinations.remove(earliest)
-            #         destinations.remove(closest)
+            # finishable_destinations = [destination for destination in doable_destinations if finishable_destination(
+            #     destination, start, step)]
+            # if(len(finishable_destinations) > 0):
+            earliest = earliest_destination(
+                doable_destinations, start)
+            if step + distance(start, earliest['start_point']) <= earliest['start_time']:
+                print("Will start on time")
+                on_time += 1
+                points += bonus
+            # if step + distance(start, earliest['start_point']) < earliest['start_time']:
+            step = earliest['end_time']
+            # if step + distance(start, earliest['start_point']) >= earliest['start_time']:
+                # step = distance(
+                    # start, earliest['start_point']) + earliest['distance']
+            finishable += 1
+            # the ones we can finish on time add points
+            points += earliest['distance']
+            rides.append(earliest)
+            destinations.remove(earliest)
             # else:
-            #     reasonable_destination = earliest_destination(
-            #         doable_destinations, start)
-            #     print(step)
-            #     if step + distance(start, reasonable_destination['start_point']) < reasonable_destination['start_time']:
-            #         step = reasonable_destination['distance'] + \
-            #             reasonable_destination['start_time']
-            #     if step + distance(start, reasonable_destination['start_point']) >= reasonable_destination['start_time']:
-            #         step += + distance(
-            #             start, reasonable_destination['start_point']) + reasonable_destination['distance']
-            #     if step > limit:
-            #         break
-            #     start = reasonable_destination["end_point"]
-            #     reasonable += 1
-            #     rides.append(reasonable_destination)
-            #     destinations.remove(reasonable_destination)
+            #     break
         else:
             break
 
         if(step > limit):
             print("WRONG")
-        # if len(rides) >= overload:
-        #     flag = False
-        #     break
+        if len(rides) > overload:
+            flag = False
+            break
     return rides, destinations, step, finishable, close, reasonable, points, on_time
 
 
 # Given the current step, is it posible to travel to the start point and then to the end before the simulation ends
 def doable_destination(destination, start, step, limit):
-    can_be_finished = step + \
+    can_be_finished_before_end_time = step + \
         distance(start, destination["start_point"]) + \
-        destination["distance"] < destination['end_time']
+        destination["distance"] <= destination['end_time']
 
     can_be_done_on_time = step + \
         distance(start, destination['start_point']
-                 ) + destination['distance'] < limit
-    return can_be_done_on_time and can_be_finished
+                 ) + destination['distance'] <= limit
+    return can_be_done_on_time and can_be_finished_before_end_time
 
 
 # Given the current step, if we move to a start_point, will it be startable when we arrive? - NO dead time
@@ -132,10 +94,10 @@ def waitable_destination(destination, start, step, tolerance):
 
 # Check if the ride can be finished before its own specified end_time
 def finishable_destination(destination, start, step):
-    if step + distance(start, destination["start_point"]) <= destination["start_time"]:
-        return step + destination["distance"] + distance(start, destination['start_point']) < destination["end_time"]
-    if step + distance(start, destination["start_point"]) > destination["start_time"]:
-        return step + destination["distance"] < destination["end_time"]
+    # if step + distance(start, destination["start_point"]) <= destination["start_time"]:
+    return step + distance(start, destination['start_point'])+destination["distance"] <= destination["end_time"]
+    # if step + distance(start, destination["start_point"]) > destination["start_time"]:
+    # return step + destination["distance"] <= destination["end_time"]
 
 
 def earliest_destination(destinations, start):
@@ -148,20 +110,34 @@ def earliest_destination(destinations, start):
     return earliest_destinations[0]
 
 
-def shortest_destination(destinations):
-    end_times = [destination['end_time'] for destination in destinations]
-    earliest_finish = min(end_times)
-    return earliest_finish[0]
-
-
 def greatest_distance(destinations, start):
     distances = [destination['distance'] for destination in destinations]
     max_distance = max(distances)
     greatest = [
         destination for destination in destinations if destination['distance'] == max_distance]
-    if (len(greatest) > 1):
-        return closest_destination(greatest, start, True)
-    return greatest[0]
+    # if (len(greatest) > 1):
+    return closest_destination(greatest, start, True)
+    # return greatest[0]
+
+
+def shortest_distance(destinations, start):
+    distances = [destination['distance'] for destination in destinations]
+    min_distance = min(distances)
+    shortest = [
+        destination for destination in destinations if destination['distance'] == min_distance]
+    # if (len(shortest) > 1):
+    return closest_destination(shortest, start, True)
+    # return shortest[0]
+
+
+def earliest_finish(destinations, start):
+    end_times = [destination['end_time'] for destination in destinations]
+    min_end_time = min(end_times)
+    early_finish = [
+        destination for destination in destinations if destination['end_time'] == min_end_time]
+    # if (len(shortest) > 1):
+    #     return closest_destination(shortest, start, True)
+    return early_finish[0]
 
 
 def closest_destination(destinations, start, flag=False):
@@ -170,13 +146,9 @@ def closest_destination(destinations, start, flag=False):
     min_distance = min(distances_to_start)
     closest = [destination for destination in destinations if distance(
         start, destination["start_point"]) == min_distance]
-    if (len(closest) > 1):
-        if(flag):
-            lowest_end_point = min([destination['end_time']
-                                    for destination in closest])
-            return [destination for destination in closest if destination['end_time'] == lowest_end_point][0]
-        return greatest_distance(closest, start)
-    return closest[0]
+    # if (len(closest) > 1):
+    return earliest_finish(closest, start)
+    # return closest[0]
 
 
 with open(filename) as file:
@@ -201,13 +173,14 @@ with open(filename) as file:
         })
         i = i+1
     rides = []
+    sorted_destinations = sorted(destinations, key=lambda k: k['distance'])
     # run simulation
     overload = math.floor(number_of_rides / vehicles)
     for vehicle in range(0, vehicles):
         progress = "Processing vehicle number: "+str(vehicle)
         print(progress)
-        ride, destinations, step_end, f, c, r, points, on_time = choose_destinations(
-            destinations, steps, overload, bonus)
+        ride, sorted_destinations, step_end, f, c, r, points, on_time = choose_destinations(
+            sorted_destinations, steps, overload, bonus)
         score += points
         accurate += on_time
         rides.append(ride)
@@ -215,7 +188,7 @@ with open(filename) as file:
             str(step_end) + " f: " + str(f) + " c: " + str(c) + " r: " + str(r)
         print(stats)
     result = str(vehicles) + ' vehicles assigned to ' + str(len(rides)) + ' rides ' + \
-        'with ' + str(len(destinations)) + ' destinations left unused'
+        'with ' + str(len(sorted_destinations)) + ' destinations left unused'
 
     print(result)
     print("Total score: "+str(score))
