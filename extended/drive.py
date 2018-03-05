@@ -1,6 +1,6 @@
 import math
 
-filename = "e_high_bonus.in"
+filename = "c_no_hurry.in"
 score = 0
 
 
@@ -39,15 +39,14 @@ def choose_destinations(destinations, limit, overload, bonus):
         doable_destinations = [destination for destination in destinations if doable_destination(
             destination, start, step, limit)]
         if(len(doable_destinations) > 0):
-            # earliest = closest_destination(
-            #     doable_destinations, start)
-            sorted_by_start_time = sorted(
-                doable_destinations, key=lambda k: distance(k['start_point'], start))
-            # sorted_by_start_point = sorted(
-            #     sorted_by_start_time, key=lambda k: k['start_point'])
-            # sorted_by_distance = sorted(
-            #     sorted_by_start_point, key=lambda k: k['distance'])
-            earliest = greatest_distance(sorted_by_start_time, start)
+            rides_with_bonus = on_start_on_time(
+                doable_destinations, start, step)
+            if (len(rides_with_bonus) == 0):
+                earliest = earliest_destination(
+                    doable_destinations, start, step)
+            else:
+                earliest = earliest_destination(
+                    rides_with_bonus, start, step)
             if step + distance(start, earliest['start_point']) <= earliest['start_time']:
                 print("Will start on time")
                 on_time += 1
@@ -67,12 +66,6 @@ def choose_destinations(destinations, limit, overload, bonus):
             destinations.remove(earliest)
         else:
             break
-
-        if(step > limit):
-            print("WRONG")
-        # if len(rides) > overload:
-        #     flag = False
-        #     break
     return rides, destinations, step, finishable, close, reasonable, points, on_time, error
 
 
@@ -88,52 +81,52 @@ def doable_destination(destination, start, step, limit):
     return can_be_done_on_time and can_be_finished_before_end_time
 
 
-# Check if the ride can be finished before its own specified end_time
-def finishable_destination(destination, start, step):
-    return step + distance(start, destination['start_point'])+destination["distance"] <= destination["end_time"]
-
-
-def earliest_destination(destinations, start):
+def earliest_destination(destinations, start, step):
     start_times = [destination['start_time'] for destination in destinations]
     earliest = min(start_times)
     earliest_destinations = [
         destination for destination in destinations if destination['start_time'] == earliest]
-    return shortest_distance(earliest_destinations, start)
+    return greatest_distance(earliest_destinations, start, step)
 
 
-def greatest_distance(destinations, start):
+def greatest_distance(destinations, start, step):
     distances = [destination['distance'] for destination in destinations]
     max_distance = max(distances)
     greatest = [
         destination for destination in destinations if destination['distance'] == max_distance]
-    return earliest_finish(greatest, start)
+    return earliest_finish(greatest, start, step)
 
 
-def shortest_distance(destinations, start):
+def shortest_distance(destinations, start, step):
     distances = [destination['distance'] for destination in destinations]
     min_distance = min(distances)
     shortest = [
         destination for destination in destinations if destination['distance'] == min_distance]
-    return earliest_finish(shortest, start)
+    return earliest_finish(shortest, start, step)
 
 
-def earliest_finish(destinations, start):
-    end_times = [destination['end_time'] for destination in destinations]
-    min_end_time = min(end_times)
-    early_finish = [
-        destination for destination in destinations if destination['end_time'] == min_end_time]
-    answer = sorted(early_finish, key=lambda k: distance(
+def earliest_finish(destinations, start, step):
+    on_time = on_start_on_time(destinations, start, step)
+    if (len(on_time) > 0):
+        return on_time[0]
+    answer = sorted(destinations, key=lambda k: distance(
         start, k['start_point']))
     return answer[0]
 
 
-def closest_destination(destinations, start, flag=False):
+def on_start_on_time(destinations, start, step):
+    on_time = [destination for destination in destinations if (
+        step + distance(start, destination['start_point']) <= destination['start_time'])]
+    return on_time
+
+
+def closest_destination(destinations, start, step):
     distances_to_start = [distance(start, destination["start_point"])
                           for destination in destinations]
     min_distance = min(distances_to_start)
     closest = [destination for destination in destinations if distance(
         start, destination["start_point"]) == min_distance]
-    return earliest_destination(closest, start)
+    return earliest_destination(closest, start, step)
 
 
 with open(filename) as file:
